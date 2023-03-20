@@ -32,6 +32,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private val logAdapter: LocationLogAdapter by lazy {
         LocationLogAdapter(
+            this,
             onMapsButtonClicked = { latitude: Double, longitude: Double ->
                 val uri: String =
                     java.lang.String.format(Locale.ENGLISH, "geo:%f,%f", latitude, longitude)

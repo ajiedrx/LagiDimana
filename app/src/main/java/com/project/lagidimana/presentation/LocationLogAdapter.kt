@@ -1,5 +1,6 @@
 package com.project.lagidimana.presentation
 
+import android.content.Context
 import android.text.SpannableStringBuilder
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -7,18 +8,20 @@ import androidx.annotation.Nullable
 import androidx.core.text.bold
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.project.lagidimana.R
 import com.project.lagidimana.changeDateFormat
 import com.project.lagidimana.databinding.ItemLocationDataBinding
 import com.project.lagidimana.presentation.model.LocationLog
 
 class LocationLogAdapter(
+    private val context: Context,
     private val onMapsButtonClicked: (Double, Double) -> Unit
 ): RecyclerView.Adapter<LocationLogAdapter.ViewHolder>() {
 
     private val datas: MutableList<LocationLog> = mutableListOf()
 
     class ViewHolder(private val binding: ItemLocationDataBinding): RecyclerView.ViewHolder(binding.root) {
-        fun bind(data: LocationLog, onMapsButtonClicked: (Double, Double) -> Unit) {
+        fun bind(context: Context, data: LocationLog, onMapsButtonClicked: (Double, Double) -> Unit) {
             with(binding){
                 btnMaps.setOnClickListener {
                     onMapsButtonClicked.invoke(data.latitude, data.longitude)
@@ -33,8 +36,8 @@ class LocationLogAdapter(
                         )
                     }
                     .append(data.time.changeDateFormat())
-                tvLatitude.text = data.latitude.toString()
-                tvLongitude.text = data.longitude.toString()
+                tvLatitude.text = context.getString(R.string.format_latitude, data.latitude)
+                tvLongitude.text = context.getString(R.string.format_longitude, data.longitude)
             }
         }
     }
@@ -46,7 +49,7 @@ class LocationLogAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = datas[position]
-        holder.bind(data, onMapsButtonClicked)
+        holder.bind(context, data, onMapsButtonClicked)
     }
 
     override fun getItemCount(): Int {

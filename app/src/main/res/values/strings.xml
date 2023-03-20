@@ -11,4 +11,6 @@
     <string name="channel_description">lagi_dimana_channel_description</string>
     <string name="app_notification_clear_data_title">LagiDimana: Location Data</string>
     <string name="app_notification_clear_data_message">Successfully cleared location data</string>
+    <string name="format_latitude">Latitude: %f</string>
+    <string name="format_longitude">Longitude: %f</string>
 </resources>
