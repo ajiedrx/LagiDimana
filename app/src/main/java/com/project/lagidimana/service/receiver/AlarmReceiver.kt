@@ -31,7 +31,7 @@ class AlarmReceiverHelper: KoinComponent{
             .setSmallIcon(R.drawable.ic_delete_sweep)
             .setContentTitle(context.getString(R.string.app_notification_clear_data_title))
             .setContentText(context.getString(R.string.app_notification_clear_data_message))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
 
         val name = context.getString(R.string.channel_name)
         val descriptionText = context.getString(R.string.channel_description)

@@ -2,12 +2,11 @@ package com.project.lagidimana
 
 import android.app.ActivityManager
 import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
-fun AppCompatActivity.isMyServiceRunning(serviceClass: Class<*>): Boolean {
+fun Context.isMyServiceRunning(serviceClass: Class<*>): Boolean {
     val manager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager?
     for (service in manager!!.getRunningServices(Int.MAX_VALUE)) {
         if (serviceClass.name == service.service.className) {

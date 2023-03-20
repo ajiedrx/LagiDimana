@@ -18,15 +18,19 @@ object Scheduler {
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
         }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            CLEAR_DATA_TASK,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(
+            pendingIntent
+        )
         alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             calendar.timeInMillis,
-            PendingIntent.getBroadcast(
-                context,
-                CLEAR_DATA_TASK,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+            pendingIntent
         )
     }
 }

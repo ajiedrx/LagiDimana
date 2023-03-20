@@ -7,4 +7,6 @@ object Const {
 
     const val DEFAULT_READABLE_DATE_TIME_PATTERN = "dd MMMM yyyy HH:mm"
     const val DEFAULT_DATA_DATE_TIME_PATTERN = "yyyy-MM-dd HH:mm"
+
+    const val LOCATION_WORKER = "LOCATION_WORKER"
 }

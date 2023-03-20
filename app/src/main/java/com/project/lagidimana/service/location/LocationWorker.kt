@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.project.lagidimana.Const
 import com.project.lagidimana.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,14 +26,17 @@ class LocationWorker(private val context: Context, workerParams: WorkerParameter
             val locationWorker = OneTimeWorkRequestBuilder<LocationWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setConstraints(constraints)
+                .addTag(Const.LOCATION_WORKER)
                 .build()
-
-            WorkManager.getInstance(context)
+            val workManagerInstance = WorkManager.getInstance(context)
+            workManagerInstance.cancelAllWorkByTag(Const.LOCATION_WORKER)
+            workManagerInstance
                 .enqueue(
                     listOf(locationWorker)
                 )
         }
     }
+
 
     override suspend fun doWork(): Result {
         if (LocationService.currentService == null) {

@@ -51,7 +51,6 @@ class LocationService: Service(), LocationListener {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         startWakeLock()
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 currentServiceNotification = ServiceNotification(this, false)
@@ -138,12 +137,14 @@ class LocationService: Service(), LocationListener {
 
     override fun onDestroy() {
         super.onDestroy()
+        currentService = null
+        mHandler.removeMessages(0)
+        timer.cancel()
         wakeLock?.release()
     }
 
     companion object{
         var currentService: LocationService? = null
-
         private val TAG = LocationService::class.java.simpleName
         private const val NOTIFICATION_ID = 9974
     }
