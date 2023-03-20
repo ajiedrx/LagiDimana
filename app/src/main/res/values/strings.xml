@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">LagiDimana</string>
+    <string name="caption_lagi">Lagi</string>
+    <string name="caption_dimana">Dimana?</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="action_open_maps">Maps</string>
+    <string name="action_start">Start</string>
+    <string name="message_start_service">Tap to start service</string>
+    <string name="message_service_running">Service running</string>
+    <string name="channel_name">lagi_dimana_notification_channel</string>
+    <string name="channel_description">lagi_dimana_channel_description</string>
+    <string name="app_notification_clear_data_title">LagiDimana: Location Data</string>
+    <string name="app_notification_clear_data_message">Successfully cleared location data</string>
+</resources>
