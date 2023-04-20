@@ -2,8 +2,11 @@ package com.project.lagidimana
 
 import android.app.ActivityManager
 import android.content.Context
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ExecutionException
 
 
 fun Context.isMyServiceRunning(serviceClass: Class<*>): Boolean {
@@ -21,4 +24,24 @@ fun String.changeDateFormat(currentFormat: String = Const.DEFAULT_DATA_DATE_TIME
     val readableFormat = DateTimeFormatter.ofPattern(targetFormat)
     val currentDateTime = LocalDateTime.parse(this, defaultFormat)
     return readableFormat.format(currentDateTime)
+}
+
+fun Context.isWorkScheduled(tag: String): Boolean {
+    val instance = WorkManager.getInstance(this)
+    val statuses = instance.getWorkInfosByTag(tag)
+    return try {
+        var running = false
+        val workInfoList = statuses.get()
+        for (workInfo in workInfoList) {
+            val state = workInfo.state
+            running = state == WorkInfo.State.RUNNING || state == WorkInfo.State.ENQUEUED
+        }
+        running
+    } catch (e: ExecutionException) {
+        e.printStackTrace()
+        false
+    } catch (e: InterruptedException) {
+        e.printStackTrace()
+        false
+    }
 }

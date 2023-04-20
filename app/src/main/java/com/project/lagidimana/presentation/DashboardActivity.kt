@@ -18,8 +18,6 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.lagidimana.R
 import com.project.lagidimana.databinding.ActivityDashboardBinding
-import com.project.lagidimana.isMyServiceRunning
-import com.project.lagidimana.service.location.LocationService
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
@@ -54,9 +52,7 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun initUI(){
-        val isLocationServiceRunning = isMyServiceRunning(LocationService::class.java)
         with(binding) {
-            setUIState(isLocationServiceRunning)
             rvLocationLog.apply {
                 adapter = logAdapter
                 layoutManager = LinearLayoutManager(this@DashboardActivity)
