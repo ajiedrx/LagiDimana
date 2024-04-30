@@ -6,8 +6,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import com.project.lagidimana.Const.CHANNEL_ID
 import com.project.lagidimana.Const.CLEAR_DATA_NOTIFICATION_ID
+import com.project.lagidimana.Const.NOTIFICATION_CHANNEL_ID
 import com.project.lagidimana.R
 import com.project.lagidimana.data.AppRepository
 import org.koin.core.component.KoinComponent
@@ -27,7 +27,7 @@ class AlarmReceiverHelper: KoinComponent{
     fun onReceive(context: Context) {
         appRepository.deleteAll()
 
-        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_delete_sweep)
             .setContentTitle(context.getString(R.string.app_notification_clear_data_title))
             .setContentText(context.getString(R.string.app_notification_clear_data_message))
@@ -36,7 +36,7 @@ class AlarmReceiverHelper: KoinComponent{
         val name = context.getString(R.string.channel_name)
         val descriptionText = context.getString(R.string.channel_description)
         val importance = NotificationManager.IMPORTANCE_DEFAULT
-        val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+        val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance).apply {
             description = descriptionText
         }
 

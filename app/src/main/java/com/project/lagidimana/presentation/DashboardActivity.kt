@@ -18,10 +18,8 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.lagidimana.R
 import com.project.lagidimana.databinding.ActivityDashboardBinding
-import com.project.lagidimana.isMyServiceRunning
-import com.project.lagidimana.service.location.LocationService
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.*
+import java.util.Locale
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -53,10 +51,8 @@ class DashboardActivity : AppCompatActivity() {
         initUI()
     }
 
-    private fun initUI(){
-        val isLocationServiceRunning = isMyServiceRunning(LocationService::class.java)
+    private fun initUI() {
         with(binding) {
-            setUIState(isLocationServiceRunning)
             rvLocationLog.apply {
                 adapter = logAdapter
                 layoutManager = LinearLayoutManager(this@DashboardActivity)
@@ -64,32 +60,32 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun initAction(){
-        with(binding){
+    private fun initAction() {
+        with(binding) {
             btnStart.setOnClickListener {
                 dashboardViewModel.startService()
             }
         }
     }
 
-    private fun initObserver(){
-        dashboardViewModel.getLocationLog().observe(this){
+    private fun initObserver() {
+        dashboardViewModel.getLocationLog().observe(this) {
             logAdapter.setData(it)
         }
-        dashboardViewModel.isServiceRunning.observe(this){
+        dashboardViewModel.isServiceRunning.observe(this) {
             setUIState(it)
         }
     }
 
-    private fun setUIState(isServiceRunning: Boolean){
-        with(binding){
+    private fun setUIState(isServiceRunning: Boolean) {
+        with(binding) {
             tvMessage.text = getString(
-                if(isServiceRunning)
+                if (isServiceRunning)
                     R.string.message_service_running
                 else
                     R.string.message_start_service
             )
-            btnStart.visibility = if(isServiceRunning) View.INVISIBLE else View.VISIBLE
+            btnStart.visibility = if (isServiceRunning) View.INVISIBLE else View.VISIBLE
             btnStart.isEnabled = !isServiceRunning
             pbCircular.isVisible = isServiceRunning
         }
@@ -137,8 +133,10 @@ class DashboardActivity : AppCompatActivity() {
         } else {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION),
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
                 MY_PERMISSIONS_REQUEST_LOCATION
             )
         }
@@ -196,8 +194,8 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    companion object{
-        fun start(context: Context){
+    companion object {
+        fun start(context: Context) {
             val intent = Intent(context, DashboardActivity::class.java)
             context.startActivity(intent)
         }
