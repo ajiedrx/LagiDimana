@@ -25,7 +25,7 @@ import com.project.lagidimana.data.model.LocationLogEntity
 import org.koin.android.ext.android.inject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Timer
 import kotlin.concurrent.schedule
 
 
@@ -130,7 +130,6 @@ class LocationService: Service(), LocationListener {
     private fun getLocation(){
         val isGPSEnable = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
         val isNetworkEnable = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        val location: Location?
 
         if ( Build.VERSION.SDK_INT >= 23 &&
             ContextCompat.checkSelfPermission(applicationContext, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED &&
@@ -147,7 +146,7 @@ class LocationService: Service(), LocationListener {
             0f,
             this@LocationService
         )
-        location = locationManager.getLastKnownLocation(if(isNetworkEnable) LocationManager.NETWORK_PROVIDER else LocationManager.GPS_PROVIDER)
+        val location: Location? = locationManager.getLastKnownLocation(if (isNetworkEnable) LocationManager.NETWORK_PROVIDER else LocationManager.GPS_PROVIDER)
         if (location != null) {
             insertLocation(location, true)
             locationManager.removeUpdates(this)

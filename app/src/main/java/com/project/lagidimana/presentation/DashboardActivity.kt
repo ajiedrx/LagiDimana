@@ -9,12 +9,12 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,56 +22,36 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.lagidimana.R
-import com.project.lagidimana.databinding.ActivityDashboardBinding
 import com.project.lagidimana.formatDate
 import com.project.lagidimana.presentation.model.LocationLog
 import com.project.lagidimana.theme.LagiDimanaTheme
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import kotlinx.coroutines.flow.StateFlow
+import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
 class DashboardActivity : ComponentActivity() {
 
-    private var _binding: ActivityDashboardBinding? = null
-    private val binding by lazy { _binding!! }
-
-    private val dashboardViewModel: DashboardViewModel by viewModel()
-
-    private val logAdapter: LocationLogAdapter by lazy {
-        LocationLogAdapter(
-            this,
-            onMapsButtonClicked = { latitude: Double, longitude: Double ->
-                val uri: String =
-                    java.lang.String.format(Locale.ENGLISH, "geo:%f,%f", latitude, longitude)
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-                this.startActivity(intent)
-            }
-        )
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        _binding = ActivityDashboardBinding.inflate(layoutInflater)
-//        setContentView(binding.root)
 
         setContent {
             LagiDimanaTheme {
@@ -80,50 +60,6 @@ class DashboardActivity : ComponentActivity() {
         }
 
         checkLocationPermission()
-        initObserver()
-        initAction()
-        initUI()
-    }
-
-    private fun initUI() {
-        with(binding) {
-            rvLocationLog.apply {
-                adapter = logAdapter
-                layoutManager = LinearLayoutManager(this@DashboardActivity)
-            }
-        }
-    }
-
-    private fun initAction() {
-        with(binding) {
-            btnStart.setOnClickListener {
-                dashboardViewModel.startService()
-            }
-        }
-    }
-
-    private fun initObserver() {
-//        dashboardViewModel.getLocationLog().observe(this) {
-//            logAdapter.setData(it)
-//        }
-//
-//        dashboardViewModel.isServiceRunning.observe(this) {
-//            setUIState(it)
-//        }
-    }
-
-    private fun setUIState(isServiceRunning: Boolean) {
-        with(binding) {
-            tvMessage.text = getString(
-                if (isServiceRunning)
-                    R.string.message_service_running
-                else
-                    R.string.message_start_service
-            )
-            btnStart.visibility = if (isServiceRunning) View.INVISIBLE else View.VISIBLE
-            btnStart.isEnabled = !isServiceRunning
-            pbCircular.isVisible = isServiceRunning
-        }
     }
 
     private fun checkLocationPermission() {
@@ -191,7 +127,7 @@ class DashboardActivity : ComponentActivity() {
                             Manifest.permission.ACCESS_FINE_LOCATION
                         ) == PackageManager.PERMISSION_GRANTED
                     ) {
-                        binding.btnStart.isEnabled = true
+//                        binding.btnStart.isEnabled = true
                     }
 
                 } else {
@@ -231,39 +167,44 @@ class DashboardActivity : ComponentActivity() {
 
     @Composable
     fun DashboardPage() {
-        val trackingLogList = dashboardViewModel.getLocationLog().collectAsState(listOf())
+        val context = LocalContext.current
+        val dashboardVM: DashboardViewModel = koinViewModel()
+        val trackingLogList = dashboardVM.getLocationLog().collectAsState(listOf())
 
         Column(modifier = Modifier.padding(start = 32.dp, end = 32.dp)) {
             Text(
-                text = getString(R.string.title_dashboard),
+                text = context.getString(R.string.title_dashboard),
                 modifier = Modifier.padding(top = 64.dp),
                 style = MaterialTheme.typography.headlineMedium
             )
 
-            ServiceOperations()
-
-
-            TrackingLogList(trackingLogList)
+            ServiceStatus(dashboardVM.isServiceRunning) { dashboardVM.startService() }
+            TrackingLogList(Modifier.padding(top = 24.dp), trackingLogList.value)
         }
     }
 
     @Composable
-    fun ServiceOperations() {
-        val dashboardVM = this@DashboardActivity.dashboardViewModel
-        val isServiceRunningState by dashboardVM.isServiceRunning.collectAsState()
+    fun ServiceStatus(isServiceRunningState: StateFlow<Boolean>, onServiceButtonClick: () -> Unit) {
+        val context = LocalContext.current
+        val isServiceRunning by isServiceRunningState.collectAsState()
 
-        Row(modifier = Modifier.padding(top = 32.dp)) {
+        Row(modifier = Modifier.padding(top = 32.dp), verticalAlignment = Alignment.CenterVertically) {
             when {
-                isServiceRunningState -> CircularProgressIndicator(color = Color.Black)
+                isServiceRunning -> CircularProgressIndicator(color = Color.Black)
 
-                else -> Button(onClick = { dashboardVM.startService() }) {
-                    Text(text = getString(R.string.action_start))
+                else -> Button(
+                    onClick = { onServiceButtonClick.invoke() }, colors = ButtonColors(
+                        containerColor = Color.Black, contentColor = Color.White, disabledContentColor = Color.LightGray,
+                        disabledContainerColor = Color.Gray
+                    )
+                ) {
+                    Text(text = context.getString(R.string.action_start))
                 }
             }
 
             Text(
                 modifier = Modifier.padding(start = 16.dp),
-                text = if (isServiceRunningState) getString(R.string.message_service_running) else getString(
+                text = if (isServiceRunning) context.getString(R.string.message_service_running) else context.getString(
                     R.string.message_start_service
                 )
             )
@@ -271,9 +212,13 @@ class DashboardActivity : ComponentActivity() {
     }
 
     @Composable
-    fun TrackingLogList(data: State<List<LocationLog>>) {
-        LazyColumn {
-            items(data.value) { log ->
+    fun TrackingLogList(modifier: Modifier = Modifier, data: List<LocationLog>) {
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(data) { log ->
                 TrackingLogItem(item = log)
             }
         }
@@ -281,6 +226,7 @@ class DashboardActivity : ComponentActivity() {
 
     @Composable
     fun TrackingLogItem(item: LocationLog) {
+        val context = LocalContext.current
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -289,8 +235,16 @@ class DashboardActivity : ComponentActivity() {
         ) {
             Column {
                 Text(text = item.time.formatDate(), style = MaterialTheme.typography.bodySmall)
-                Text(modifier = Modifier.padding(top = 12.dp), text = getString(R.string.format_latitude, item.latitude), style = MaterialTheme.typography.labelSmall)
-                Text(modifier = Modifier.padding(top = 12.dp), text = getString(R.string.format_longitude, item.longitude), style = MaterialTheme.typography.labelSmall)
+                Text(
+                    modifier = Modifier.padding(top = 12.dp),
+                    text = context.getString(R.string.format_latitude, item.latitude),
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Text(
+                    modifier = Modifier.padding(top = 6.dp),
+                    text = context.getString(R.string.format_longitude, item.longitude),
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
 
             IconButton(onClick = {
