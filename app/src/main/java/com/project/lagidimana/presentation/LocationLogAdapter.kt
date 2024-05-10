@@ -9,8 +9,8 @@ import androidx.core.text.bold
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.project.lagidimana.R
-import com.project.lagidimana.changeDateFormat
 import com.project.lagidimana.databinding.ItemLocationDataBinding
+import com.project.lagidimana.formatDate
 import com.project.lagidimana.presentation.model.LocationLog
 
 class LocationLogAdapter(
@@ -35,7 +35,7 @@ class LocationLogAdapter(
                                 "Offline, "
                         )
                     }
-                    .append(data.time.changeDateFormat())
+                    .append(data.time.formatDate())
                 tvLatitude.text = context.getString(R.string.format_latitude, data.latitude)
                 tvLongitude.text = context.getString(R.string.format_longitude, data.longitude)
             }

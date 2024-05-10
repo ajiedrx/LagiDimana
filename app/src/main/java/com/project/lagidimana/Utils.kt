@@ -19,7 +19,7 @@ fun Context.isMyServiceRunning(serviceClass: Class<*>): Boolean {
     return false
 }
 
-fun String.changeDateFormat(currentFormat: String = Const.DEFAULT_DATA_DATE_TIME_PATTERN, targetFormat: String = Const.DEFAULT_READABLE_DATE_TIME_PATTERN): String{
+fun String.formatDate(currentFormat: String = Const.DEFAULT_DATA_DATE_TIME_PATTERN, targetFormat: String = Const.DEFAULT_READABLE_DATE_TIME_PATTERN): String {
     val defaultFormat = DateTimeFormatter.ofPattern(currentFormat)
     val readableFormat = DateTimeFormatter.ofPattern(targetFormat)
     val currentDateTime = LocalDateTime.parse(this, defaultFormat)

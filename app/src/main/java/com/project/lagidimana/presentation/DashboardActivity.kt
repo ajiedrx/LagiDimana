@@ -11,17 +11,45 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.lagidimana.R
 import com.project.lagidimana.databinding.ActivityDashboardBinding
+import com.project.lagidimana.formatDate
+import com.project.lagidimana.presentation.model.LocationLog
+import com.project.lagidimana.theme.LagiDimanaTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.Locale
 
-class DashboardActivity : AppCompatActivity() {
+class DashboardActivity : ComponentActivity() {
 
     private var _binding: ActivityDashboardBinding? = null
     private val binding by lazy { _binding!! }
@@ -42,8 +70,14 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _binding = ActivityDashboardBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+//        _binding = ActivityDashboardBinding.inflate(layoutInflater)
+//        setContentView(binding.root)
+
+        setContent {
+            LagiDimanaTheme {
+                DashboardPage()
+            }
+        }
 
         checkLocationPermission()
         initObserver()
@@ -69,12 +103,13 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun initObserver() {
-        dashboardViewModel.getLocationLog().observe(this) {
-            logAdapter.setData(it)
-        }
-        dashboardViewModel.isServiceRunning.observe(this) {
-            setUIState(it)
-        }
+//        dashboardViewModel.getLocationLog().observe(this) {
+//            logAdapter.setData(it)
+//        }
+//
+//        dashboardViewModel.isServiceRunning.observe(this) {
+//            setUIState(it)
+//        }
     }
 
     private fun setUIState(isServiceRunning: Boolean) {
@@ -191,6 +226,97 @@ class DashboardActivity : AppCompatActivity() {
                 }
                 return
             }
+        }
+    }
+
+    @Composable
+    fun DashboardPage() {
+        val trackingLogList = dashboardViewModel.getLocationLog().collectAsState(listOf())
+
+        Column(modifier = Modifier.padding(start = 32.dp, end = 32.dp)) {
+            Text(
+                text = getString(R.string.title_dashboard),
+                modifier = Modifier.padding(top = 64.dp),
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            ServiceOperations()
+
+
+            TrackingLogList(trackingLogList)
+        }
+    }
+
+    @Composable
+    fun ServiceOperations() {
+        val dashboardVM = this@DashboardActivity.dashboardViewModel
+        val isServiceRunningState by dashboardVM.isServiceRunning.collectAsState()
+
+        Row(modifier = Modifier.padding(top = 32.dp)) {
+            when {
+                isServiceRunningState -> CircularProgressIndicator(color = Color.Black)
+
+                else -> Button(onClick = { dashboardVM.startService() }) {
+                    Text(text = getString(R.string.action_start))
+                }
+            }
+
+            Text(
+                modifier = Modifier.padding(start = 16.dp),
+                text = if (isServiceRunningState) getString(R.string.message_service_running) else getString(
+                    R.string.message_start_service
+                )
+            )
+        }
+    }
+
+    @Composable
+    fun TrackingLogList(data: State<List<LocationLog>>) {
+        LazyColumn {
+            items(data.value) { log ->
+                TrackingLogItem(item = log)
+            }
+        }
+    }
+
+    @Composable
+    fun TrackingLogItem(item: LocationLog) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(text = item.time.formatDate(), style = MaterialTheme.typography.bodySmall)
+                Text(modifier = Modifier.padding(top = 12.dp), text = getString(R.string.format_latitude, item.latitude), style = MaterialTheme.typography.labelSmall)
+                Text(modifier = Modifier.padding(top = 12.dp), text = getString(R.string.format_longitude, item.longitude), style = MaterialTheme.typography.labelSmall)
+            }
+
+            IconButton(onClick = {
+                val intent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(
+                        java.lang.String.format(
+                            Locale.ENGLISH,
+                            "geo:%f,%f",
+                            item.latitude,
+                            item.longitude
+                        )
+                    )
+                )
+                this@DashboardActivity.startActivity(intent)
+            }, modifier = Modifier.align(Alignment.CenterVertically)) {
+                Icon(painter = painterResource(id = R.drawable.ic_map), contentDescription = null)
+            }
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun DashboardPreview() {
+        LagiDimanaTheme {
+            DashboardPage()
         }
     }
 
