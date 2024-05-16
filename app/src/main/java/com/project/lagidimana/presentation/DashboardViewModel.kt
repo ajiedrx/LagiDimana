@@ -18,7 +18,6 @@ class DashboardViewModel(
 
     val isServiceRunning: StateFlow<Boolean> by lazy { _isServiceRunning.asStateFlow() }
     private val _isServiceRunning: MutableStateFlow<Boolean> = MutableStateFlow(application.isMyServiceRunning(LocationService::class.java))
-    
 
     fun startService() {
         _isServiceRunning.value = true

@@ -6,12 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,7 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import com.project.lagidimana.Const.isBackgroundLocationPermissionEnabled
 import com.project.lagidimana.R
 import com.project.lagidimana.formatDate
 import com.project.lagidimana.presentation.model.LocationLog
@@ -49,6 +49,25 @@ import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
 class DashboardActivity : ComponentActivity() {
+
+    private val locationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            showLocationPermissionRationaleDialog()
+            return@registerForActivityResult
+        }
+
+        when {
+            !isGranted -> {
+                showLocationPermissionRequestDeniedDialog()
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_LONG).show()
+            }
+
+            else -> {
+                if (!isBackgroundLocationPermissionEnabled()) showBackgroundLocationPermissionRequestDialog()
+                checkLocationPermission()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,107 +81,64 @@ class DashboardActivity : ComponentActivity() {
         checkLocationPermission()
     }
 
-    private fun checkLocationPermission() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            ) {
-                AlertDialog.Builder(this)
-                    .setTitle("Location Permission Needed")
-                    .setMessage("This app needs the Location permission, please accept to use location functionality")
-                    .setPositiveButton(
-                        "OK"
-                    ) { _, _ ->
-                        requestLocationPermission()
-                    }
-                    .setCancelable(false)
-                    .create()
-                    .show()
-            } else {
-                requestLocationPermission()
-            }
-        }
-    }
-
-    private fun requestLocationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                ),
-                MY_PERMISSIONS_REQUEST_LOCATION
-            )
-        } else {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                MY_PERMISSIONS_REQUEST_LOCATION
-            )
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
+    @Deprecated("This method has been deprecated in favor of using the Activity Result API\n      which brings increased type safety via an {@link ActivityResultContract} and the prebuilt\n      contracts for common intents available in\n      {@link androidx.activity.result.contract.ActivityResultContracts}, provides hooks for\n      testing, and allow receiving results in separate, testable classes independent from your\n      activity. Use\n      {@link #registerForActivityResult(ActivityResultContract, ActivityResultCallback)} passing\n      in a {@link RequestMultiplePermissions} object for the {@link ActivityResultContract} and\n      handling the result in the {@link ActivityResultCallback#onActivityResult(Object) callback}.")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             MY_PERMISSIONS_REQUEST_LOCATION -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (ContextCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-//                        binding.btnStart.isEnabled = true
-                    }
-
-                } else {
-                    AlertDialog.Builder(this)
-                        .setTitle("Location Permission Needed")
-                        .setMessage("This app needs the Location permission, please enable Location permission on app settings to use this app")
-                        .setPositiveButton(
-                            "OK"
-                        ) { _, _ ->
-                            if (!ActivityCompat.shouldShowRequestPermissionRationale(
-                                    this,
-                                    Manifest.permission.ACCESS_FINE_LOCATION
-                                )
-                            ) {
-                                startActivity(
-                                    Intent(
-                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                        Uri.fromParts("package", this.packageName, null),
-                                    ),
-                                )
-                            }
-                        }
-                        .setNegativeButton(
-                            "DECLINE"
-                        ) { _, _ ->
-                            finish()
-                        }
-                        .setCancelable(false)
-                        .create()
-                        .show()
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                    showLocationPermissionRequestDeniedDialog()
                     Toast.makeText(this, "Permission denied", Toast.LENGTH_LONG).show()
                 }
                 return
             }
         }
+    }
+
+    private fun checkLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestLocationPermission()
+        }
+    }
+
+    private fun requestLocationPermission() = locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+
+    private fun showLocationPermissionRationaleDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Location Permission Needed")
+            .setMessage("This app needs the Location permission, please accept to use location functionality")
+            .setPositiveButton("OK") { _, _ -> requestLocationPermission() }
+            .setCancelable(false)
+            .create()
+            .show()
+    }
+
+    private fun showLocationPermissionRequestDeniedDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Location Permission Needed")
+            .setMessage("This app needs the Location permission, please enable Location permission on app settings to use this app")
+            .setPositiveButton("OK") { _, _ ->
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", this.packageName, null)))
+                }
+            }
+            .setNegativeButton("DECLINE") { _, _ -> finish() }
+            .setCancelable(false)
+            .create()
+            .show()
+    }
+
+    private fun showBackgroundLocationPermissionRequestDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Background Location Permission Needed")
+            .setMessage("This app needs the Background Location permission, please allow app to get location all the time")
+            .setPositiveButton("OK") { _, _ ->
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", this.packageName, null)))
+            }
+            .setNegativeButton("DECLINE") { _, _ -> finish() }
+            .setCancelable(false)
+            .create()
+            .show()
     }
 
     @Composable
@@ -178,7 +154,10 @@ class DashboardActivity : ComponentActivity() {
                 style = MaterialTheme.typography.headlineMedium
             )
 
-            ServiceStatus(dashboardVM.isServiceRunning) { dashboardVM.startService() }
+            ServiceStatus(dashboardVM.isServiceRunning) {
+                if (isBackgroundLocationPermissionEnabled()) dashboardVM.startService()
+                else showBackgroundLocationPermissionRequestDialog()
+            }
             TrackingLogList(Modifier.padding(top = 24.dp), trackingLogList.value)
         }
     }
@@ -204,20 +183,14 @@ class DashboardActivity : ComponentActivity() {
 
             Text(
                 modifier = Modifier.padding(start = 16.dp),
-                text = if (isServiceRunning) context.getString(R.string.message_service_running) else context.getString(
-                    R.string.message_start_service
-                )
+                text = if (isServiceRunning) context.getString(R.string.message_service_running) else context.getString(R.string.message_start_service)
             )
         }
     }
 
     @Composable
     fun TrackingLogList(modifier: Modifier = Modifier, data: List<LocationLog>) {
-        LazyColumn(
-            modifier = modifier,
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        LazyColumn(modifier = modifier, contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             items(data) { log ->
                 TrackingLogItem(item = log)
             }
@@ -234,35 +207,25 @@ class DashboardActivity : ComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(text = item.time.formatDate(), style = MaterialTheme.typography.bodySmall)
+                Text(text = item.time.formatDate(), style = MaterialTheme.typography.bodyMedium)
                 Text(
                     modifier = Modifier.padding(top = 12.dp),
                     text = context.getString(R.string.format_latitude, item.latitude),
-                    style = MaterialTheme.typography.labelSmall
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.LightGray,
                 )
                 Text(
                     modifier = Modifier.padding(top = 6.dp),
                     text = context.getString(R.string.format_longitude, item.longitude),
-                    style = MaterialTheme.typography.labelSmall
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.LightGray,
                 )
             }
 
-            IconButton(onClick = {
-                val intent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse(
-                        java.lang.String.format(
-                            Locale.ENGLISH,
-                            "geo:%f,%f",
-                            item.latitude,
-                            item.longitude
-                        )
-                    )
-                )
-                this@DashboardActivity.startActivity(intent)
-            }, modifier = Modifier.align(Alignment.CenterVertically)) {
-                Icon(painter = painterResource(id = R.drawable.ic_map), contentDescription = null)
-            }
+            IconButton(
+                onClick = { this@DashboardActivity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(java.lang.String.format(Locale.ENGLISH, "geo:%f,%f", item.latitude, item.longitude)))) },
+                modifier = Modifier.align(Alignment.CenterVertically)
+            ) { Icon(painter = painterResource(id = R.drawable.ic_map), contentDescription = null) }
         }
     }
 

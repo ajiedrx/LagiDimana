@@ -30,7 +30,6 @@ import kotlin.concurrent.schedule
 
 
 class LocationService: Service(), LocationListener {
-
     private val foregroundNotificationId: Int = (System.currentTimeMillis() % 10000).toInt()
     private val foregroundNotification by lazy {
         NotificationCompat.Builder(this, foregroundNotificationChannelId)
@@ -148,7 +147,7 @@ class LocationService: Service(), LocationListener {
         )
         val location: Location? = locationManager.getLastKnownLocation(if (isNetworkEnable) LocationManager.NETWORK_PROVIDER else LocationManager.GPS_PROVIDER)
         if (location != null) {
-            insertLocation(location, true)
+            insertLocation(location, isNetworkEnable)
             locationManager.removeUpdates(this)
         }
     }
